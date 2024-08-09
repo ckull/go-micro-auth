@@ -29,7 +29,28 @@ func NewAuthUsecase(authRepository repository.AuthRepository) AuthUsecase {
 	}
 }
 
-func (u *authUsecase) Login(c echo.Context, cfg *config.Config, loginReq *model.LoginReq) (*model.LoginRes, error) {
+func (u *authUsecase) Register(c echo.Context, cfg *config.Config, registerReq *model.RegisterReq) (*model.AccessToken, error)  {
+	userPassport, err := u.authRepository.findOneUserByEmail(registerReq.Email)
+	if err == nil  && userPassport == nil {
+
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(registerReq.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, errors.New("failed to hash password")
+	}
+
+	claims := &jwt.Claims{
+		UserId:   registerReq.Email,
+		RoleCode: "USER",
+	}
+
+	accessToken := jwt.GetTokens(c, cfg, u, claims)
+
+	return accessToken, nil
+}
+
+func (u *authUsecase) Login(c echo.Context, cfg *config.Config, loginReq *model.LoginReq) (*model.AccessToken, error) {
 	userPassport, err := u.authRepository.findOneUserByEmail(loginReq.Email)
 
 	if err != nil {
@@ -50,24 +71,19 @@ func (u *authUsecase) Login(c echo.Context, cfg *config.Config, loginReq *model.
 
 	refreshToken := u.authRepository.RefreshToken(cfg, &claims)
 
-	accessTokenCookie := &http.Cookie{
-		Name:     "access_token",
-		Value:    accessToken,
-		Expires:  time.Now().Add(time.Minute * 15), // Set the expiration time
-		HttpOnly: true,
-		Path:     "/",
-	}
-	c.SetCookie(accessTokenCookie)
-
 	// Set refresh token as an HTTP-only cookie
 	refreshTokenCookie := &http.Cookie{
 		Name:     "refresh_token",
 		Value:    refreshToken,
-		Expires:  time.Now().Add(time.Hour * 24 * 7), // Set the expiration time for the refresh token
+		Expires:  cfg.Jwt.RefreshTokenDuration
 		HttpOnly: true,
 		Path:     "/",
 	}
 
 	c.SetCookie(refreshTokenCookie)
+
+	return &AccessToken{
+		access_token: accessToken
+	}, nil
 
 }

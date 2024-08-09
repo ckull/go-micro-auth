@@ -145,3 +145,24 @@ func ParseToken(secret string, tokenString string) (*AuthMapClaims, error) {
 		return nil, errors.New("error: claims type is invalid")
 	}
 }
+
+func GetTokens(c *echo.Context, cfg *config.Config, authUsecase *useCase.authUsecase, claims *jwt.Claims) (*model.AccessToken){
+	accessToken := authUsecase.authRepository.AccessToken(cfg, &claims)
+
+	refreshToken := authUsecase.authRepository.RefreshToken(cfg, &claims)
+
+	refreshTokenCookie := &http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		Expires:  cfg.Jwt.RefreshTokenDuration
+		HttpOnly: true,
+		Path:     "/",
+	}
+
+	c.SetCookie(refreshTokenCookie)
+
+	return &AccessToken{
+		accessToken: accessToken
+	}
+
+}

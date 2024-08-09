@@ -26,8 +26,12 @@ func NewAuthRepository(db *mongo.Client) AuthRepository {
 	}
 }
 
-func (r *authRepository) init() *mongo.Collection {
+func (r *authRepository) usersCollection() *mongo.Collection {
 	return r.db.Database("Auth").Collection("Users")
+}
+
+func (r *authRepository) tokensCollection() *mongo.Collection {
+	return r.db.Database("Auth").Collection("Tokens")
 }
 
 func (r *authRepository) findOneUserByEmail(email string) (*model.UserPassport, error) {
@@ -36,13 +40,32 @@ func (r *authRepository) findOneUserByEmail(email string) (*model.UserPassport, 
 
 	userPassport := new(model.UserPassport)
 
-	authCollection := r.init()
-	err := authCollection.FindOne(ctx, bson.M{"email": email}).Decode(&userPassport)
+	collection := r.usersCollection()
+	err := collection.FindOne(ctx, bson.M{"email": email}).Decode(&userPassport)
 	if err != nil {
 		return nil, err
 	}
 
 	return userPassport, err
+}
+
+func (r *authRepository) updateToken(uid string, refreshToken string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	collection := r.tokensCollection()
+
+	filter := bson.M{"_id": uid}
+	update := bson.M{"$set": bson.M{"refresh_token": refreshToken}}
+	result, err := refreshTokenCollection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return nil, err
+	}
+
+	token := new(model.Token)
+	updated := result.Decode(&token)
+
+	return updated, nil
 }
 
 func (r *authRepository) AccessToken(cfg *config.Config, claims *jwt.Claims) string {

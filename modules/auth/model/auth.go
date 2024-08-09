@@ -13,6 +13,15 @@ type (
 		RefreshToken string `json:"refresh_token" form:"refresh_token" validate:"required,max=500"`
 	}
 
+	RegisterReq struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	RegisterRes struct {
+		AccessToken string `json:"access_token"`
+	}
+
 	LoginRes struct {
 		Id           string    `json:"_id"`
 		RoleCode     int       `json:"role_code"`
@@ -30,5 +39,20 @@ type (
 		Id       string `json:"_id"`
 		Email    string `json:"email"`
 		Password string `json:"password"`
+	}
+
+	User struct {
+		UID      primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+		Email    string             `bson:"email" json:"email"`
+		Password string             `bson:"password" json:"-"`
+	}
+
+	Token struct {
+		UID          primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+		RefreshToken string             `bson:"refresh_token" json:"refresh_token"`
+	}
+
+	AccessToken struct {
+		accessToken string `json:"access_token"`
 	}
 )
