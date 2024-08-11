@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -26,15 +27,31 @@ func DbConn(pctx context.Context, cfg *config.Config) *mongo.Client {
 		DbInstance, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.Db.URI))
 
 		if err != nil {
-			log.Fatalf("Error: Conntect to database error: %s", err.Error())
+			log.Fatalf("Error: Connect to database error: %s", err.Error())
 		}
 
 		if err := DbInstance.Ping(ctx, readpref.Primary()); err != nil {
 			log.Fatalf("Error: Pinging to database error: %s", err.Error())
 		}
 
+		if err := createIndexes(pctx, DbInstance); err != nil {
+			log.Fatalf("Error: Create indexes: %s", err.Error())
+		}
+
 	})
 
 	return DbInstance
 
+}
+
+func createIndexes(pctx context.Context, db *mongo.Client) error {
+
+	_, err := db.Database("Auth").Collection("Users").Indexes().CreateOne(
+		pctx, mongo.IndexModel{
+			Keys:    bson.M{"email": 1},
+			Options: options.Index().SetUnique(true).SetPartialFilterExpression(bson.M{"oauth_provider": "email"}),
+		},
+	)
+
+	return err
 }

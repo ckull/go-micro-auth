@@ -1,6 +1,8 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
 type (
 	LoginReq struct {
@@ -32,27 +34,36 @@ type (
 	}
 
 	LogoutReq struct {
-		CredentialId string `json:"credential_id" form:"credential_id" validate:"required,max=64"`
+		RefreshToken string `json:"refresh_token"`
 	}
 
 	UserPassport struct {
-		Id       string `json:"_id"`
-		Email    string `json:"email"`
-		Password string `json:"password"`
+		Email         string `json:"email"`
+		Password      string `json:"password"`
+		OauthProvider string `json:"oauth_provider"`
+		Role          string `json:"role"`
 	}
 
 	User struct {
-		UID      primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
-		Email    string             `bson:"email" json:"email"`
-		Password string             `bson:"password" json:"-"`
+		Email         string    `bson:"email" json:"email"`
+		Password      string    `bson:"password" json:"password"`
+		OauthProvider string    `bson:"oauth_provider" json:"oauth_provider"`
+		Role          string    `bson:"role" json:"role"`
+		CreatedAt     time.Time `bson:"created_at" json:"created_at"`
+		UpdatedAt     time.Time `bson:"updated_at" json:"updated_at"`
 	}
 
-	Token struct {
-		UID          primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
-		RefreshToken string             `bson:"refresh_token" json:"refresh_token"`
+	Blacklist struct {
+		RefreshToken string    `bson:"refresh_token"`
+		ExpiresAt    time.Time `bson:"expires_at"`
 	}
 
 	AccessToken struct {
-		accessToken string `json:"access_token"`
+		AccessToken string `json:"access_token"`
+	}
+
+	Token struct {
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
 	}
 )

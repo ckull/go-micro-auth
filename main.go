@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"go-auth/config"
-	"go-auth/pkg/factory"
+	"go-auth/pkg/database"
 	"go-auth/server"
 	"log"
 	"os"
@@ -25,8 +25,7 @@ func main() {
 		return os.Args[1]
 	}())
 
-	db := factory.NewDatabase(ctx, cfg)
-
-	server.Start(ctx, cfg, &db)
+	db := database.DbConn(ctx, cfg)
+	server.Start(ctx, cfg, db)
 
 }
