@@ -56,9 +56,9 @@ func LoadConfig(path string) *Config {
 			AccessTokenSecret:    os.Getenv("ACCESS_TOKEN_SECRET"),
 			RefreshTokenSecret:   os.Getenv("REFRESH_TOKEN_SECRET"),
 			ApiSecret:            os.Getenv("API_SECRET"),
-			AccessTokenDuration:  utils.ParseStringToInt("ACCESS_TOKEN_DURATION"),
-			RefreshTokenDuration: utils.ParseStringToInt("ACCESS_TOKEN_DURATION"),
-			ApiDuration:          utils.ParseStringToInt("ACCESS_TOKEN_SECRET"),
+			AccessTokenDuration:  utils.ParseStringToInt(os.Getenv("ACCESS_TOKEN_DURATION")),
+			RefreshTokenDuration: utils.ParseStringToInt(os.Getenv("REFRESH_TOKEN_DURATION")),
+			ApiDuration:          utils.ParseStringToInt(os.Getenv("ACCESS_TOKEN_DURATION")),
 		},
 	}
 }

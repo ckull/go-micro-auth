@@ -5,10 +5,10 @@ import (
 	"go-auth/modules/auth/handler"
 	"go-auth/modules/auth/repository"
 	"go-auth/modules/auth/useCase"
-	"go-auth/server"
+	"go-auth/server/types"
 )
 
-func AuthRoute(s *server.Server) {
+func AuthRoute(s *types.Server) {
 
 	authRepo := repository.NewAuthRepository(s.Db)
 	authUsecase := useCase.NewAuthUsecase(authRepo)

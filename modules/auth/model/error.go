@@ -11,3 +11,5 @@ var ErrInvalidRefreshToken = errors.New("Invalid refresh token")
 var ErrAddBlacklistTokenFailed = errors.New("Add blacklist token failed")
 
 var ErrFailedToHashPassword = errors.New("Failed to hash password")
+
+var ErrInvalidAccessToken = errors.New("Invalid access token")

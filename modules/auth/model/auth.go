@@ -16,8 +16,8 @@ type (
 	}
 
 	RegisterReq struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+		Email    string `json:"email form:"email" validate:"required,email,max=255"`
+		Password string `json:"password  form:"password" validate:"required,max=32"`
 	}
 
 	RegisterRes struct {

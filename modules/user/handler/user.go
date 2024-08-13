@@ -1,11 +1,11 @@
-package useCase
+package handler
 
 import (
-	"go-auth/modules/user/model"
 	"go-auth/modules/user/useCase"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type (
@@ -25,12 +25,13 @@ func NewUserHandler(userUsecase useCase.UserUsecase) UserHandler {
 }
 
 func (h *userHandler) GetUserByUID(c echo.Context) error {
-	var user model.User
-	if err := c.Bind(&user); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
+	uidParam := c.Param("uid")
+	uid, err := primitive.ObjectIDFromHex(uidParam)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid UID format"})
 	}
 
-	users, err := h.userUsecase.GetUserByUID()
+	users, err := h.userUsecase.GetUserByUID(uid)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}

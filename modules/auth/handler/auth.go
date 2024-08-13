@@ -6,6 +6,7 @@ import (
 	"go-auth/modules/auth/model"
 	"go-auth/modules/auth/useCase"
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 )
@@ -86,11 +87,22 @@ func (h *authHandler) RefreshToken(c echo.Context) error {
 		RefreshToken: refreshToken,
 	}
 
-	newAccessToken, err := h.authUsecase.ReloadToken(c, h.cfg, reloadReq)
+	newTokens, err := h.authUsecase.ReloadToken(c, h.cfg, reloadReq)
+
+	if newTokens != nil {
+		refreshTokenCookie := &http.Cookie{
+			Name:     "refresh_token",
+			Value:    *&newTokens.RefreshToken,
+			Expires:  time.Now().Add(time.Duration(h.cfg.Jwt.RefreshTokenDuration) * time.Hour),
+			HttpOnly: true,
+			Path:     "/",
+		}
+		c.SetCookie(refreshTokenCookie)
+	}
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{"accessToken": *newAccessToken})
+	return c.JSON(http.StatusOK, newTokens)
 
 }
