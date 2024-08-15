@@ -2,12 +2,16 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 	"go-auth/config"
 	"go-auth/modules/auth/model"
 	"go-auth/modules/auth/useCase"
+	"go-auth/pkg/cookieHelper"
+	"go-auth/utils"
+	"log"
 	"net/http"
-	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 )
 
@@ -22,6 +26,7 @@ type (
 	authHandler struct {
 		authUsecase useCase.AuthUsecase
 		cfg         *config.Config
+		validator   *validator.Validate
 	}
 )
 
@@ -29,6 +34,7 @@ func NewAuthHandler(authUsecase useCase.AuthUsecase, cfg *config.Config) AuthHan
 	return &authHandler{
 		authUsecase: authUsecase,
 		cfg:         cfg,
+		validator:   validator.New(),
 	}
 }
 
@@ -37,11 +43,19 @@ func (h *authHandler) RegisterByEmail(c echo.Context) error {
 	if err := c.Bind(&registerReq); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
 	}
+
+	if err := h.validator.Struct(registerReq); err != nil {
+		validationErrors := utils.FormatValidationError(err)
+		log.Printf("Error: Validate data failed: %s", err.Error())
+		return c.JSON(http.StatusBadRequest, validationErrors)
+	}
+
+	fmt.Println("registerReq: ", registerReq)
 	accessToken, err := h.authUsecase.RegisterByEmail(c, h.cfg, &registerReq)
 	if err != nil {
 		switch {
 		case errors.Is(err, model.ErrEmailAlreadyExists):
-			c.JSON(http.StatusConflict, map[string]string{"error": "Email is already exist"})
+			return c.JSON(http.StatusConflict, map[string]string{"error": "Email is already exist"})
 		}
 
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
@@ -53,6 +67,12 @@ func (h *authHandler) Login(c echo.Context) error {
 	var loginReq model.LoginReq
 	if err := c.Bind(&loginReq); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
+	}
+
+	if err := h.validator.Struct(loginReq); err != nil {
+		validationErrors := utils.FormatValidationError(err)
+		log.Printf("Error: Validate data failed: %s", err.Error())
+		return c.JSON(http.StatusBadRequest, validationErrors)
 	}
 
 	accessToken, err := h.authUsecase.Login(c, h.cfg, &loginReq)
@@ -89,16 +109,10 @@ func (h *authHandler) RefreshToken(c echo.Context) error {
 
 	newTokens, err := h.authUsecase.ReloadToken(c, h.cfg, reloadReq)
 
-	if newTokens != nil {
-		refreshTokenCookie := &http.Cookie{
-			Name:     "refresh_token",
-			Value:    *&newTokens.RefreshToken,
-			Expires:  time.Now().Add(time.Duration(h.cfg.Jwt.RefreshTokenDuration) * time.Hour),
-			HttpOnly: true,
-			Path:     "/",
-		}
-		c.SetCookie(refreshTokenCookie)
-	}
+	cookie := cookieHelper.NewCookieHelper(c, h.cfg)
+
+	cookie.SetRefreshToken(newTokens.RefreshToken)
+
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}

@@ -22,6 +22,8 @@ type (
 		Login(c echo.Context, cfg *config.Config, loginReq *model.LoginReq) (*model.AccessToken, error)
 		Logout(c echo.Context, cfg *config.Config, logoutReq *model.LogoutReq) error
 		ReloadToken(c echo.Context, cfg *config.Config, reloadReq *model.Token) (*model.Token, error)
+		FindOrRegisterFacebookUser(userInfo *model.FacebookUser) (*model.User, error)
+		GenerateTokens(user *model.User, cfg *config.Config) *model.Token
 	}
 
 	authUsecase struct {
@@ -36,6 +38,7 @@ func NewAuthUsecase(authRepository repository.AuthRepository) AuthUsecase {
 }
 
 func (u *authUsecase) RegisterByEmail(c echo.Context, cfg *config.Config, registerReq *model.RegisterReq) (*model.AccessToken, error) {
+
 	user, err := u.authRepository.FindOneUserByEmail(registerReq.Email)
 	if err == nil && user != nil {
 		return nil, model.ErrEmailAlreadyExists
@@ -59,12 +62,15 @@ func (u *authUsecase) RegisterByEmail(c echo.Context, cfg *config.Config, regist
 		Role:          "user",
 	}
 
-	if err := u.authRepository.AddUser(userPassport); err != nil {
+	newUser, err := u.authRepository.AddUser(userPassport)
+	if err != nil {
 		return nil, errors.New("failed to add user")
 	}
 
+	userId := newUser.ID.Hex()
+
 	claims := &jwtAuth.Claims{
-		UserId:   registerReq.Email,
+		UserId:   userId,
 		RoleCode: "user",
 	}
 
@@ -87,6 +93,29 @@ func (u *authUsecase) RegisterByEmail(c echo.Context, cfg *config.Config, regist
 	}, nil
 }
 
+func (u *authUsecase) FindOrRegisterFacebookUser(userInfo *model.FacebookUser) (*model.User, error) {
+	facebookID := userInfo.OauthId
+	user, err := u.authRepository.FindByProviderId(facebookID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if user == nil && err != nil {
+		userPassport := &model.UserPassport{
+			Email:         userInfo.Email,
+			OauthProvider: "facebook",
+			OauthId:       userInfo.OauthId,
+		}
+
+		if user, err := u.authRepository.AddUser(userPassport); err != nil {
+			return user, err
+		}
+	}
+
+	return user, err
+}
+
 func (u *authUsecase) Login(c echo.Context, cfg *config.Config, loginReq *model.LoginReq) (*model.AccessToken, error) {
 	user, err := u.authRepository.FindOneUserByEmail(loginReq.Email)
 
@@ -99,8 +128,10 @@ func (u *authUsecase) Login(c echo.Context, cfg *config.Config, loginReq *model.
 		return nil, errors.New("error, password is invalid")
 	}
 
+	userId := user.ID.Hex()
+
 	claims := &jwtAuth.Claims{
-		UserId:   user.Email,
+		UserId:   userId,
 		RoleCode: user.Role,
 	}
 
@@ -192,4 +223,23 @@ func (u *authUsecase) ReloadToken(c echo.Context, cfg *config.Config, reloadReq 
 
 	// If the access token error is something else, return an error
 	return nil, model.ErrInvalidAccessToken
+}
+
+func (u *authUsecase) GenerateTokens(user *model.User, cfg *config.Config) *model.Token {
+
+	userId := user.ID.Hex()
+
+	claims := &jwtAuth.Claims{
+		UserId:   userId,
+		RoleCode: user.Role,
+	}
+
+	accessToken := u.authRepository.AccessToken(cfg, claims)
+
+	refreshToken := u.authRepository.RefreshToken(cfg, claims)
+
+	return &model.Token{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}
 }

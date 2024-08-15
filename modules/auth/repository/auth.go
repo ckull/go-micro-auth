@@ -18,9 +18,10 @@ type (
 		FindOneUserByEmail(email string) (*model.User, error)
 		AccessToken(cfg *config.Config, claims *jwtAuth.Claims) string
 		RefreshToken(cfg *config.Config, claims *jwtAuth.Claims) string
-		AddUser(userPassport *model.UserPassport) error
+		AddUser(userPassport *model.UserPassport) (*model.User, error)
 		AddBlacklistToken(refreshToken string, expiration time.Time) error
 		IsBlacklistExist(refreshToken string) (bool, error)
+		FindByProviderId(id string) (*model.User, error)
 	}
 
 	authRepository struct {
@@ -42,7 +43,23 @@ func (r *authRepository) blacklistCollection() *mongo.Collection {
 	return r.db.Database("Auth").Collection("Blacklists")
 }
 
-func (r *authRepository) AddUser(userPassport *model.UserPassport) error {
+func (r *authRepository) FindByProviderId(id string) (*model.User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	collection := r.userCollection()
+
+	var user model.User
+	err := collection.FindOne(ctx, bson.M{"oauth_id": id}).Decode(&user)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, err
+
+}
+
+func (r *authRepository) AddUser(userPassport *model.UserPassport) (*model.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -50,18 +67,23 @@ func (r *authRepository) AddUser(userPassport *model.UserPassport) error {
 		Email:         userPassport.Email,
 		Password:      userPassport.Password,
 		OauthProvider: userPassport.OauthProvider,
+		OauthId:       userPassport.OauthId,
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
+	}
+
+	if userPassport.OauthId != "" {
+		newUser.OauthId = userPassport.OauthId
 	}
 
 	collection := r.userCollection()
 
 	_, err := collection.InsertOne(ctx, newUser)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return newUser, err
 }
 
 func (r *authRepository) FindOneUserByEmail(email string) (*model.User, error) {

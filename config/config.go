@@ -1,12 +1,15 @@
 package config
 
 import (
+	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 
 	"go-auth/utils"
 
 	"github.com/joho/godotenv"
+	"golang.org/x/oauth2"
 )
 
 type (
@@ -15,6 +18,8 @@ type (
 		*Db
 		*Jwt
 		*Grpc
+		*Facebook
+		*Google
 	}
 
 	Server struct {
@@ -23,6 +28,24 @@ type (
 
 	Db struct {
 		URI string
+	}
+
+	Facebook struct {
+		ClientID     string
+		ClientSecret string
+		RedirectURL  string
+		Endpoint     string
+		Scopes       []string
+		*oauth2.Config
+	}
+
+	Google struct {
+		ClientID     string
+		ClientSecret string
+		RedirectURL  string
+		Endpoint     string
+		Scopes       []string
+		*oauth2.Config
 	}
 
 	Jwt struct {
@@ -59,6 +82,38 @@ func LoadConfig(path string) *Config {
 			AccessTokenDuration:  utils.ParseStringToInt(os.Getenv("ACCESS_TOKEN_DURATION")),
 			RefreshTokenDuration: utils.ParseStringToInt(os.Getenv("REFRESH_TOKEN_DURATION")),
 			ApiDuration:          utils.ParseStringToInt(os.Getenv("ACCESS_TOKEN_DURATION")),
+		},
+		Facebook: &Facebook{
+			ClientID:     os.Getenv("OAUTH2_FACEBOOK_CLIENT_ID"),
+			ClientSecret: os.Getenv("OAUTH2_FACEBOOK_CLIENT_SECRET"),
+			RedirectURL:  os.Getenv("OAUTH2_FACEBOOK_REDIRECT_URL"),
+			Endpoint:     os.Getenv("OAUTH2_FACEBOOK_ENDPOINT"),
+			Scopes: func() []string {
+				var scopes []string
+				jsonString := os.Getenv("OAUTH2_FACEBOOK_SCOPES")
+				err := json.Unmarshal([]byte(jsonString), &scopes)
+				if err != nil {
+					fmt.Println("Error unmarshalling JSON:", err)
+					return nil
+				}
+				return scopes
+			}(),
+		},
+		Google: &Google{
+			ClientID:     os.Getenv("OAUTH2_GOOGLE_CLIENT_ID"),
+			ClientSecret: os.Getenv("OAUTH2_GOOGLE_CLIENT_SECRET"),
+			RedirectURL:  os.Getenv("OAUTH2_GOOGLE_REDIRECT_URL"),
+			Endpoint:     os.Getenv("OAUTH2_GOOGLE_ENDPOINT"),
+			Scopes: func() []string {
+				var scopes []string
+				jsonString := os.Getenv("OAUTH2_GOOGLE_SCOPES")
+				err := json.Unmarshal([]byte(jsonString), &scopes)
+				if err != nil {
+					fmt.Println("Error unmarshalling JSON:", err)
+					return nil
+				}
+				return scopes
+			}(),
 		},
 	}
 }
