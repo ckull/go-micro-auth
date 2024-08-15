@@ -6,9 +6,9 @@ import (
 	"go-auth/config"
 	"go-auth/modules/auth/model"
 	"go-auth/modules/auth/repository"
+	"go-auth/pkg/cookieHelper"
 	"go-auth/pkg/jwtAuth"
 	"net/http"
-	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
@@ -78,15 +78,9 @@ func (u *authUsecase) RegisterByEmail(c echo.Context, cfg *config.Config, regist
 
 	refreshToken := u.authRepository.RefreshToken(cfg, claims)
 
-	refreshTokenCookie := &http.Cookie{
-		Name:     "refresh_token",
-		Value:    refreshToken,
-		Expires:  time.Now().Add(time.Duration(cfg.Jwt.RefreshTokenDuration) * time.Hour),
-		HttpOnly: true,
-		Path:     "/",
-	}
+	cookie := cookieHelper.NewCookieHelper(c, cfg)
 
-	c.SetCookie(refreshTokenCookie)
+	cookie.SetRefreshToken(refreshToken)
 
 	return &model.AccessToken{
 		AccessToken: accessToken,
@@ -139,16 +133,9 @@ func (u *authUsecase) Login(c echo.Context, cfg *config.Config, loginReq *model.
 
 	refreshToken := u.authRepository.RefreshToken(cfg, claims)
 
-	// Set refresh token as an HTTP-only cookie
-	refreshTokenCookie := &http.Cookie{
-		Name:     "refresh_token",
-		Value:    refreshToken,
-		Expires:  time.Now().Add(time.Duration(cfg.Jwt.RefreshTokenDuration) * time.Hour),
-		HttpOnly: true,
-		Path:     "/",
-	}
+	cookie := cookieHelper.NewCookieHelper(c, cfg)
 
-	c.SetCookie(refreshTokenCookie)
+	cookie.SetRefreshToken(refreshToken)
 
 	return &model.AccessToken{
 		AccessToken: accessToken,

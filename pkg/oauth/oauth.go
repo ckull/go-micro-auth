@@ -1,4 +1,4 @@
-package auth0
+package oauth
 
 import (
 	"context"
@@ -14,35 +14,38 @@ import (
 )
 
 type (
-	Auth0Provider interface {
+	OAuthHandler interface {
+		FacebookLogin(c echo.Context) error
+		FacebookCallback(c echo.Context) error
+		getFacebookUserInfo(accessToken string) (*model.FacebookUser, error)
 	}
 
-	auth0Provider struct {
+	OauthHandler struct {
 		Server      *types.Server
 		AuthUsecase useCase.AuthUsecase
 	}
 )
 
-func NewAuth0Provider(server *types.Server, authUsecase useCase.AuthUsecase) Auth0Provider {
-	return &auth0Provider{
+func NewOAuthHandler(server *types.Server, authUsecase useCase.AuthUsecase) OAuthHandler {
+	return &OauthHandler{
 		Server:      server,
 		AuthUsecase: authUsecase,
 	}
 }
 
-func (a *auth0Provider) facebookLogin(c echo.Context) error {
+func (a *OauthHandler) FacebookLogin(c echo.Context) error {
 	redirectUrl := a.Server.Cfg.Facebook.AuthCodeURL("state")
 
 	return c.Redirect(http.StatusTemporaryRedirect, redirectUrl)
 }
 
-func (a *auth0Provider) googleLogin(c echo.Context) error {
+func (a *OauthHandler) GoogleLogin(c echo.Context) error {
 	redirectUrl := a.Server.Cfg.Google.AuthCodeURL("state")
 
 	return c.Redirect(http.StatusTemporaryRedirect, redirectUrl)
 }
 
-func (a *auth0Provider) getFacebookUserInfo(accessToken string) (*model.FacebookUser, error) {
+func (a *OauthHandler) getFacebookUserInfo(accessToken string) (*model.FacebookUser, error) {
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", "https://graph.facebook.com/me?fields=id,name,email", nil)
 	req.Header.Set("Authorization", "Bearer "+accessToken)
@@ -60,7 +63,7 @@ func (a *auth0Provider) getFacebookUserInfo(accessToken string) (*model.Facebook
 	return &userInfo, nil
 }
 
-func (a *auth0Provider) facebookCallback(c echo.Context) error {
+func (a *OauthHandler) FacebookCallback(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -68,7 +71,7 @@ func (a *auth0Provider) facebookCallback(c echo.Context) error {
 
 	token, err := a.Server.Cfg.Facebook.Exchange(ctx, code)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "Failed to exchange token: "+err.Error())
+		return c.JSON(http.StatusInternalServerError, "Failed to exchange token: "+err.Error())
 	}
 
 	userInfo, err := a.getFacebookUserInfo(token.AccessToken)
@@ -79,7 +82,7 @@ func (a *auth0Provider) facebookCallback(c echo.Context) error {
 	user, err := a.AuthUsecase.FindOrRegisterFacebookUser(userInfo)
 
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "Failed to get user info: "+err.Error())
+		return c.JSON(http.StatusInternalServerError, "Failed to get user info: "+err.Error())
 	}
 
 	tokens := a.AuthUsecase.GenerateTokens(user, a.Server.Cfg)
