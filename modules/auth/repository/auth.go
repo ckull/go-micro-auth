@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -22,6 +23,7 @@ type (
 		AddBlacklistToken(refreshToken string, expiration time.Time) error
 		IsBlacklistExist(refreshToken string) (bool, error)
 		FindByProviderId(id string) (*model.User, error)
+		FindUserByUID(objectID primitive.ObjectID) (*model.User, error)
 	}
 
 	authRepository struct {
@@ -94,6 +96,21 @@ func (r *authRepository) FindOneUserByEmail(email string) (*model.User, error) {
 
 	collection := r.userCollection()
 	filter := bson.M{"email": email}
+	err := collection.FindOne(ctx, filter).Decode(&user)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, err
+}
+
+func (r *authRepository) FindUserByUID(objectID primitive.ObjectID) (*model.User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	collection := r.userCollection()
+	var user *model.User
+	filter := bson.M{"_id": objectID}
 	err := collection.FindOne(ctx, filter).Decode(&user)
 	if err != nil {
 		return nil, err

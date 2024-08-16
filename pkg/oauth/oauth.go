@@ -3,10 +3,11 @@ package oauth
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"go-auth/config"
 	"go-auth/modules/auth/model"
 	"go-auth/modules/auth/useCase"
 	"go-auth/pkg/cookieHelper"
-	"go-auth/server/types"
 	"net/http"
 	"time"
 
@@ -21,26 +22,31 @@ type (
 	}
 
 	OauthHandler struct {
-		Server      *types.Server
+		Cfg         *config.Config
 		AuthUsecase useCase.AuthUsecase
 	}
 )
 
-func NewOAuthHandler(server *types.Server, authUsecase useCase.AuthUsecase) OAuthHandler {
+func NewOAuthHandler(cfg *config.Config, authUsecase useCase.AuthUsecase) OAuthHandler {
 	return &OauthHandler{
-		Server:      server,
+		Cfg:         cfg,
 		AuthUsecase: authUsecase,
 	}
 }
 
 func (a *OauthHandler) FacebookLogin(c echo.Context) error {
-	redirectUrl := a.Server.Cfg.Facebook.AuthCodeURL("state")
+	fmt.Println("facebook: ", a.Cfg.Facebook)
+
+	redirectUrl := a.Cfg.Facebook.AuthCodeURL("state")
+	fmt.Println("redirect url: ", redirectUrl)
+
+	fmt.Println("echo context: ", c)
 
 	return c.Redirect(http.StatusTemporaryRedirect, redirectUrl)
 }
 
 func (a *OauthHandler) GoogleLogin(c echo.Context) error {
-	redirectUrl := a.Server.Cfg.Google.AuthCodeURL("state")
+	redirectUrl := a.Cfg.Google.AuthCodeURL("state")
 
 	return c.Redirect(http.StatusTemporaryRedirect, redirectUrl)
 }
@@ -69,7 +75,7 @@ func (a *OauthHandler) FacebookCallback(c echo.Context) error {
 
 	code := c.QueryParam("code")
 
-	token, err := a.Server.Cfg.Facebook.Exchange(ctx, code)
+	token, err := a.Cfg.Facebook.Exchange(ctx, code)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "Failed to exchange token: "+err.Error())
 	}
@@ -85,9 +91,9 @@ func (a *OauthHandler) FacebookCallback(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "Failed to get user info: "+err.Error())
 	}
 
-	tokens := a.AuthUsecase.GenerateTokens(user, a.Server.Cfg)
+	tokens := a.AuthUsecase.GenerateTokens(user, a.Cfg)
 
-	cookie := cookieHelper.NewCookieHelper(c, a.Server.Cfg)
+	cookie := cookieHelper.NewCookieHelper(c, a.Cfg)
 
 	cookie.SetRefreshToken(tokens.RefreshToken)
 

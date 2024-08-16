@@ -33,6 +33,8 @@ func Start(ctx context.Context, cfg *config.Config, db *mongo.Client) {
 		AllowMethods: []string{echo.GET, echo.POST, echo.PUT, echo.PATCH, echo.DELETE},
 	}))
 
+	// s.App.Use(middleware.Recover())
+
 	auth.AuthRoute(s)
 	user.UserRoute(s)
 	s.App.Logger.Fatal(s.App.Start(":8080"))

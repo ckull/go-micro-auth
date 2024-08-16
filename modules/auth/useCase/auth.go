@@ -12,6 +12,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -24,6 +25,7 @@ type (
 		ReloadToken(c echo.Context, cfg *config.Config, reloadReq *model.Token) (*model.Token, error)
 		FindOrRegisterFacebookUser(userInfo *model.FacebookUser) (*model.User, error)
 		GenerateTokens(user *model.User, cfg *config.Config) *model.Token
+		FindUserByUID(objectID primitive.ObjectID) (*model.User, error)
 	}
 
 	authUsecase struct {
@@ -85,6 +87,12 @@ func (u *authUsecase) RegisterByEmail(c echo.Context, cfg *config.Config, regist
 	return &model.AccessToken{
 		AccessToken: accessToken,
 	}, nil
+}
+
+func (u *authUsecase) FindUserByUID(objectID primitive.ObjectID) (*model.User, error) {
+	user, error := u.authRepository.FindUserByUID(objectID)
+
+	return user, error
 }
 
 func (u *authUsecase) FindOrRegisterFacebookUser(userInfo *model.FacebookUser) (*model.User, error) {
