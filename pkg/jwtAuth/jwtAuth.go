@@ -1,8 +1,7 @@
-package jwt
+package jwtAuth
 
 import (
 	"errors"
-	"math"
 	"os"
 	"time"
 
@@ -61,8 +60,12 @@ func now() time.Time {
 }
 
 // Note that: t is a second unit
-func jwtTimeDurationCal(t int64) *jwt.NumericDate {
-	return jwt.NewNumericDate(now().Add(time.Duration(t * int64(math.Pow10(9)))))
+func JwtTimeDurationMinute(t int64) *jwt.NumericDate {
+	return jwt.NewNumericDate(now().Add(time.Minute * time.Duration(t)))
+}
+
+func JwtTimeDurationHour(t int64) *jwt.NumericDate {
+	return jwt.NewNumericDate(now().Add(time.Hour * time.Duration(t)))
 }
 
 func jwtTimeRepeatAdapter(t int64) *jwt.NumericDate {
@@ -78,7 +81,7 @@ func NewAccessToken(secret string, expiredAt int64, claims *Claims) AuthFactory 
 				RegisteredClaims: jwt.RegisteredClaims{
 					Issuer:    os.Getenv("JWT_ISSUER"),
 					Subject:   "access-token",
-					ExpiresAt: jwtTimeDurationCal(expiredAt),
+					ExpiresAt: JwtTimeDurationMinute(expiredAt),
 					NotBefore: jwt.NewNumericDate(now()),
 					IssuedAt:  jwt.NewNumericDate(now()),
 				},
@@ -96,7 +99,7 @@ func NewRefreshToken(secret string, expiredAt int64, claims *Claims) AuthFactory
 				RegisteredClaims: jwt.RegisteredClaims{
 					Issuer:    os.Getenv("JWT_ISSUER"),
 					Subject:   "refresh-token",
-					ExpiresAt: jwtTimeDurationCal(expiredAt),
+					ExpiresAt: JwtTimeDurationHour(expiredAt),
 					NotBefore: jwt.NewNumericDate(now()),
 					IssuedAt:  jwt.NewNumericDate(now()),
 				},
@@ -114,7 +117,7 @@ func NewApiKey(secret string, expiredAt int64) AuthFactory {
 				RegisteredClaims: jwt.RegisteredClaims{
 					Issuer:    os.Getenv("JWT_ISSUER"),
 					Subject:   "api-key",
-					ExpiresAt: jwtTimeDurationCal(expiredAt),
+					ExpiresAt: JwtTimeDurationHour(expiredAt),
 					NotBefore: jwt.NewNumericDate(now()),
 					IssuedAt:  jwt.NewNumericDate(now()),
 				},
@@ -145,3 +148,22 @@ func ParseToken(secret string, tokenString string) (*AuthMapClaims, error) {
 		return nil, errors.New("error: claims type is invalid")
 	}
 }
+
+// func GetTokens(c echo.Echo, cfg *config.Config, authUsecase *useCase.AuthUsecase, claims *Claims) string {
+// 	accessToken := authUsecase.AuthRepository.AccessToken(cfg, &claims)
+
+// 	refreshToken := authUsecase.AuthRepository.RefreshToken(cfg, &claims)
+
+// 	refreshTokenCookie := &http.Cookie{
+// 		Name:     "refresh_token",
+// 		Value:    refreshToken,
+// 		Expires:  JwtTimeDurationHour(cfg.Jwt.RefreshTokenDuration),
+// 		HttpOnly: true,
+// 		Path:     "/",
+// 	}
+
+// 	c.SetCookie(refreshTokenCookie)
+
+// 	return accessToken
+
+// }

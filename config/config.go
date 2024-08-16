@@ -7,6 +7,9 @@ import (
 	"go-auth/utils"
 
 	"github.com/joho/godotenv"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/facebook"
+	"golang.org/x/oauth2/google"
 )
 
 type (
@@ -15,6 +18,8 @@ type (
 		*Db
 		*Jwt
 		*Grpc
+		Facebook *oauth2.Config
+		Google   *oauth2.Config
 	}
 
 	Server struct {
@@ -32,6 +37,12 @@ type (
 		AccessTokenDuration  int64
 		RefreshTokenDuration int64
 		ApiDuration          int64
+	}
+
+	Redis struct {
+		Address  string
+		Password string
+		DB       int
 	}
 
 	Grpc struct {
@@ -56,9 +67,23 @@ func LoadConfig(path string) *Config {
 			AccessTokenSecret:    os.Getenv("ACCESS_TOKEN_SECRET"),
 			RefreshTokenSecret:   os.Getenv("REFRESH_TOKEN_SECRET"),
 			ApiSecret:            os.Getenv("API_SECRET"),
-			AccessTokenDuration:  utils.ParseStringToInt("ACCESS_TOKEN_DURATION"),
-			RefreshTokenDuration: utils.ParseStringToInt("ACCESS_TOKEN_DURATION"),
-			ApiDuration:          utils.ParseStringToInt("ACCESS_TOKEN_SECRET"),
+			AccessTokenDuration:  utils.ParseStringToInt(os.Getenv("ACCESS_TOKEN_DURATION")),
+			RefreshTokenDuration: utils.ParseStringToInt(os.Getenv("REFRESH_TOKEN_DURATION")),
+			ApiDuration:          utils.ParseStringToInt(os.Getenv("ACCESS_TOKEN_DURATION")),
+		},
+		Facebook: &oauth2.Config{
+			ClientID:     os.Getenv("OAUTH2_FACEBOOK_CLIENT_ID"),
+			ClientSecret: os.Getenv("OAUTH2_FACEBOOK_CLIENT_SECRET"),
+			RedirectURL:  os.Getenv("OAUTH2_FACEBOOK_REDIRECT_URL"),
+			Endpoint:     facebook.Endpoint,
+			Scopes:       []string{"email"},
+		},
+		Google: &oauth2.Config{
+			ClientID:     os.Getenv("OAUTH2_GOOGLE_CLIENT_ID"),
+			ClientSecret: os.Getenv("OAUTH2_GOOGLE_CLIENT_SECRET"),
+			RedirectURL:  os.Getenv("OAUTH2_GOOGLE_REDIRECT_URL"),
+			Endpoint:     google.Endpoint,
+			Scopes:       []string{"email"},
 		},
 	}
 }

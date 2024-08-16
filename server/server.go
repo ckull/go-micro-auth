@@ -3,6 +3,10 @@ package server
 import (
 	"context"
 	"go-auth/config"
+	auth "go-auth/modules/auth/route"
+	user "go-auth/modules/user/route"
+	"go-auth/server/types"
+
 	"sync"
 
 	"github.com/labstack/echo/v4"
@@ -10,21 +14,13 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type (
-	Server struct {
-		App *echo.Echo
-		Db  *mongo.Client
-		Cfg *config.Config
-	}
-)
-
 var (
-	serverInstance Server
+	serverInstance types.Server
 	once           sync.Once
 )
 
 func Start(ctx context.Context, cfg *config.Config, db *mongo.Client) {
-	s := &Server{
+	s := &types.Server{
 		App: echo.New(),
 		Db:  db,
 		Cfg: cfg,
@@ -37,5 +33,9 @@ func Start(ctx context.Context, cfg *config.Config, db *mongo.Client) {
 		AllowMethods: []string{echo.GET, echo.POST, echo.PUT, echo.PATCH, echo.DELETE},
 	}))
 
+	// s.App.Use(middleware.Recover())
+
+	auth.AuthRoute(s)
+	user.UserRoute(s)
 	s.App.Logger.Fatal(s.App.Start(":8080"))
 }
