@@ -20,6 +20,7 @@ type (
 		*Grpc
 		Facebook *oauth2.Config
 		Google   *oauth2.Config
+		*Redis
 	}
 
 	Server struct {
