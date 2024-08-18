@@ -7,6 +7,7 @@ import (
 	"go-auth/pkg/jwtAuth"
 	"time"
 
+	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -27,13 +28,15 @@ type (
 	}
 
 	authRepository struct {
-		db *mongo.Client
+		db    *mongo.Client
+		redis *redis.Client
 	}
 )
 
-func NewAuthRepository(db *mongo.Client) AuthRepository {
+func NewAuthRepository(db *mongo.Client, redis *redis.Client) AuthRepository {
 	return &authRepository{
 		db,
+		redis,
 	}
 }
 
@@ -131,6 +134,12 @@ func (r *authRepository) AddBlacklistToken(refreshToken string, expiration time.
 	}
 
 	_, err := collection.InsertOne(ctx, blacklist)
+
+	duration := time.Until(expiration)
+	if err := r.redis.Set(ctx, refreshToken, "blacklisted", duration).Err(); err != nil {
+		return err
+	}
+
 	return err
 }
 
@@ -138,18 +147,25 @@ func (r *authRepository) IsBlacklistExist(refreshToken string) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	collection := r.blacklistCollection()
-	filter := bson.M{
-		"refresh_token": refreshToken,
-		"expires_at":    bson.M{"$gt": time.Now()},
-	}
+	result, err := r.redis.Get(ctx, refreshToken).Result()
+	if err == redis.Nil {
+		collection := r.blacklistCollection()
+		filter := bson.M{
+			"refresh_token": refreshToken,
+			"expires_at":    bson.M{"$gt": time.Now()},
+		}
 
-	count, err := collection.CountDocuments(ctx, filter)
-	if err != nil {
+		count, err := collection.CountDocuments(ctx, filter)
+		if err != nil {
+			return false, err
+		}
+
+		return count > 0, nil
+	} else if err != nil {
 		return false, err
 	}
+	return result == "blacklisted", nil
 
-	return count > 0, nil
 }
 
 func (r *authRepository) AccessToken(cfg *config.Config, claims *jwtAuth.Claims) string {
