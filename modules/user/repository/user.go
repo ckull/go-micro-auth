@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	"go-auth/modules/user/model"
+	"go-meechok/modules/user/model"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"

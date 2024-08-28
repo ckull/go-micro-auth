@@ -1,11 +1,11 @@
 package route
 
 import (
-	"go-auth/modules/user/handler"
-	"go-auth/modules/user/middleware"
-	"go-auth/modules/user/repository"
-	"go-auth/modules/user/useCase"
-	"go-auth/server/types"
+	"go-meechok/modules/user/handler"
+	"go-meechok/modules/user/middleware"
+	"go-meechok/modules/user/repository"
+	"go-meechok/modules/user/useCase"
+	"go-meechok/server/types"
 )
 
 func UserRoute(s *types.Server) {

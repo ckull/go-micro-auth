@@ -1,7 +1,7 @@
-package redisService
+package redisCon
 
 import (
-	"go-auth/config"
+	"go-meechok/config"
 
 	"github.com/redis/go-redis/v9"
 )

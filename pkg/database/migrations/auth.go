@@ -2,8 +2,8 @@ package migrations
 
 import (
 	"context"
-	"go-auth/config"
-	"go-auth/pkg/database"
+	"go-meechok/config"
+	"go-meechok/pkg/database"
 	"log"
 
 	"go.mongodb.org/mongo-driver/bson"

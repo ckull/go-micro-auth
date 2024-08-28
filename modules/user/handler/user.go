@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"go-auth/modules/user/useCase"
+	"go-meechok/modules/user/useCase"
 	"net/http"
 
 	"github.com/labstack/echo/v4"

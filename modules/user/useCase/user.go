@@ -1,8 +1,8 @@
 package useCase
 
 import (
-	"go-auth/modules/user/model"
-	"go-auth/modules/user/repository"
+	"go-meechok/modules/user/model"
+	"go-meechok/modules/user/repository"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )

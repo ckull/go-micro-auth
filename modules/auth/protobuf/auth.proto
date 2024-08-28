@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option go_package = "go-meechok/modules/auth/protobuf";
+
+service AuthGrpcService {
+  rpc VerifyAccessToken(VerifyAccessTokenReq) returns (VerifyAccessTokenRes);
+  rpc GetRole(GetRoleReq) returns (GetRoleRes);
+}
+
+message VerifyAccessTokenReq {
+  string accessToken = 1;
+}
+
+message VerifyAccessTokenRes {
+  bool isValid = 1;
+}
+
+message GetRoleReq {}
+
+message GetRoleRes {
+  string role = 1;
+}

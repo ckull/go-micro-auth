@@ -2,10 +2,10 @@ package server
 
 import (
 	"context"
-	"go-auth/config"
-	auth "go-auth/modules/auth/route"
-	user "go-auth/modules/user/route"
-	"go-auth/server/types"
+	"go-meechok/config"
+	auth "go-meechok/modules/auth/route"
+	user "go-meechok/modules/user/route"
+	"go-meechok/server/types"
 
 	"sync"
 

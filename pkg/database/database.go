@@ -2,7 +2,7 @@ package database
 
 import (
 	"context"
-	"go-auth/config"
+	"go-meechok/config"
 	"log"
 	"sync"
 	"time"

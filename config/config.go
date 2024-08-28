@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"go-auth/utils"
+	"go-meechok/utils"
 
 	"github.com/joho/godotenv"
 	"golang.org/x/oauth2"
@@ -21,6 +21,7 @@ type (
 		Facebook *oauth2.Config
 		Google   *oauth2.Config
 		*Redis
+		*Kafka
 	}
 
 	Server struct {
@@ -47,8 +48,13 @@ type (
 	}
 
 	Grpc struct {
-		AuthUrl string
-		UserUrl string
+		AuthUrl      string
+		UserUrl      string
+		InventoryUrl string
+	}
+
+	Kafka struct {
+		Brokers []string
 	}
 )
 
@@ -72,6 +78,11 @@ func LoadConfig(path string) *Config {
 			RefreshTokenDuration: utils.ParseStringToInt(os.Getenv("REFRESH_TOKEN_DURATION")),
 			ApiDuration:          utils.ParseStringToInt(os.Getenv("ACCESS_TOKEN_DURATION")),
 		},
+		Grpc: &Grpc{
+			AuthUrl:      ":50051",
+			UserUrl:      ":50052",
+			InventoryUrl: ":50053",
+		},
 		Facebook: &oauth2.Config{
 			ClientID:     os.Getenv("OAUTH2_FACEBOOK_CLIENT_ID"),
 			ClientSecret: os.Getenv("OAUTH2_FACEBOOK_CLIENT_SECRET"),
@@ -85,6 +96,9 @@ func LoadConfig(path string) *Config {
 			RedirectURL:  os.Getenv("OAUTH2_GOOGLE_REDIRECT_URL"),
 			Endpoint:     google.Endpoint,
 			Scopes:       []string{"email"},
+		},
+		Kafka: &Kafka{
+			Brokers: []string{""},
 		},
 	}
 }

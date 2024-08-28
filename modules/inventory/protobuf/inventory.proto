@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+option go_package = "go-meechok/modules/inventory/protobuf";
+
+
+service InventoryService {
+  rpc GetInventory(GetInventoryRequest) returns (InventoryResponse) {}
+  rpc UpdateInventory(UpdateInventoryRequest) returns (InventoryResponse) {}
+  rpc ReserveInventory(ReserveInventoryRequest) returns (ReserveInventoryResponse) {}
+  rpc ReleaseInventory(ReleaseInventoryRequest) returns (ReleaseInventoryResponse) {}
+  rpc ListInventory(ListInventoryRequest) returns (ListInventoryResponse) {}
+}
+
+message InventoryInfo {
+  string id = 1;
+  string productId = 2;
+  int32 quantity = 3;
+  int64 version = 4;
+  string createdAt = 5;
+  string updatedAt = 6;
+}
+
+message GetInventoryRequest {
+  string id = 1;
+}
+
+message UpdateInventoryRequest {
+  InventoryInfo inventory = 1;
+}
+
+message ReserveInventoryRequest {
+  string id = 1;
+  int32 quantity = 2;
+}
+
+message ReleaseInventoryRequest {
+  string id = 1;
+  int32 quantity = 2;
+}
+
+message ListInventoryRequest {}
+
+message InventoryResponse {
+  InventoryInfo inventory = 1;
+}
+
+message ReserveInventoryResponse {
+  bool success = 1;
+}
+
+message ReleaseInventoryResponse {
+  bool success = 1;
+}
+
+message ListInventoryResponse {
+  repeated InventoryInfo inventories = 1;
+}

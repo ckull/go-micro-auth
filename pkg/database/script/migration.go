@@ -2,8 +2,8 @@ package script
 
 import (
 	"context"
-	"go-auth/config"
-	migration "go-auth/pkg/database/migrations"
+	"go-meechok/config"
+	migration "go-meechok/pkg/database/migrations"
 	"log"
 	"os"
 )

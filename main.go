@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"go-auth/config"
-	"go-auth/pkg/database"
-	"go-auth/server"
+	"go-meechok/config"
+	"go-meechok/pkg/database"
+	"go-meechok/server"
 	"log"
 	"os"
 )
@@ -26,6 +26,7 @@ func main() {
 	}())
 
 	db := database.DbConn(ctx, cfg)
+
 	server.Start(ctx, cfg, db)
 
 }

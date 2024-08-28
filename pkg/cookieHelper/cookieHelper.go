@@ -1,7 +1,7 @@
 package cookieHelper
 
 import (
-	"go-auth/config"
+	"go-meechok/config"
 	"net/http"
 	"time"
 

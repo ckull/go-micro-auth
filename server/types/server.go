@@ -1,7 +1,7 @@
 package types
 
 import (
-	"go-auth/config"
+	"go-meechok/config"
 
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/mongo"

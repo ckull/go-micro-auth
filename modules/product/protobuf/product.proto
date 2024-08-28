@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+option go_package = "go-meechok/modules/product/protobuf";
+
+
+service ProductService {
+  rpc GetProduct(GetProductReq) returns (ProductRes) {}
+  rpc CreateProduct(CreateProductReq) returns (ProductRes) {}
+  rpc UpdateProduct(UpdateProductReq) returns (ProductRes) {}
+  rpc DeleteProduct(DeleteProductReq) returns (DeleteProductRes) {}
+  rpc ListProducts(ListProductsReq) returns (ListProductsRes) {}
+}
+
+message ProductInfo {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  double price = 4;
+  bool  isActive = 5;
+  string sellerId = 6;
+  repeated string categories = 7;
+  string  createdAt = 8;
+  string  updatedAt = 9;
+}
+
+message GetProductReq {
+  string id = 1;
+}
+
+message CreateProductReq {
+  ProductInfo product = 1;
+}
+
+message UpdateProductReq {
+  ProductInfo product = 1;
+}
+
+message DeleteProductReq {
+  string id = 1;
+}
+
+message ListProductsReq {}
+
+message ProductRes {
+  ProductInfo product = 1;
+}
+
+message DeleteProductRes {
+  bool success = 1;
+}
+
+message ListProductsRes {
+  repeated ProductInfo products = 1;
+}

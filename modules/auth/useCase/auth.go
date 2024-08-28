@@ -3,11 +3,11 @@ package useCase
 import (
 	"errors"
 	"fmt"
-	"go-auth/config"
-	"go-auth/modules/auth/model"
-	"go-auth/modules/auth/repository"
-	"go-auth/pkg/cookieHelper"
-	"go-auth/pkg/jwtAuth"
+	"go-meechok/config"
+	"go-meechok/modules/auth/model"
+	"go-meechok/modules/auth/repository"
+	"go-meechok/pkg/cookieHelper"
+	"go-meechok/pkg/jwtAuth"
 	"net/http"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -71,9 +71,14 @@ func (u *authUsecase) RegisterByEmail(c echo.Context, cfg *config.Config, regist
 
 	userId := newUser.ID.Hex()
 
+	customerRole := &model.Role{
+		Role:        "CUSTOMER",
+		Permissions: []string{"VIEW_PRODUCT"},
+	}
+
 	claims := &jwtAuth.Claims{
-		UserId:   userId,
-		RoleCode: "user",
+		UserId: userId,
+		Role:   *customerRole,
 	}
 
 	accessToken := u.authRepository.AccessToken(cfg, claims)
@@ -133,8 +138,8 @@ func (u *authUsecase) Login(c echo.Context, cfg *config.Config, loginReq *model.
 	userId := user.ID.Hex()
 
 	claims := &jwtAuth.Claims{
-		UserId:   userId,
-		RoleCode: user.Role,
+		UserId: userId,
+		Role:   user.Role,
 	}
 
 	accessToken := u.authRepository.AccessToken(cfg, claims)
@@ -225,8 +230,8 @@ func (u *authUsecase) GenerateTokens(user *model.User, cfg *config.Config) *mode
 	userId := user.ID.Hex()
 
 	claims := &jwtAuth.Claims{
-		UserId:   userId,
-		RoleCode: user.Role,
+		UserId: userId,
+		Role:   user.Role,
 	}
 
 	accessToken := u.authRepository.AccessToken(cfg, claims)

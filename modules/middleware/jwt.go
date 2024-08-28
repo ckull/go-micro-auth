@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"go-auth/pkg/jwtAuth"
+	"go-meechok/pkg/jwtAuth"
 	"os"
 
 	"github.com/golang-jwt/jwt/v5"

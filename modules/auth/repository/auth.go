@@ -2,9 +2,9 @@ package repository
 
 import (
 	"context"
-	"go-auth/config"
-	"go-auth/modules/auth/model"
-	"go-auth/pkg/jwtAuth"
+	"go-meechok/config"
+	"go-meechok/modules/auth/model"
+	"go-meechok/pkg/jwtAuth"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -25,6 +25,7 @@ type (
 		IsBlacklistExist(refreshToken string) (bool, error)
 		FindByProviderId(id string) (*model.User, error)
 		FindUserByUID(objectID primitive.ObjectID) (*model.User, error)
+		GetRole(roleName string) (*model.Role, error)
 	}
 
 	authRepository struct {
@@ -42,6 +43,10 @@ func NewAuthRepository(db *mongo.Client, redis *redis.Client) AuthRepository {
 
 func (r *authRepository) userCollection() *mongo.Collection {
 	return r.db.Database("Auth").Collection("Users")
+}
+
+func (r *authRepository) roleCollection() *mongo.Collection {
+	return r.db.Database("Auth").Collection("Roles")
 }
 
 func (r *authRepository) blacklistCollection() *mongo.Collection {
@@ -170,14 +175,29 @@ func (r *authRepository) IsBlacklistExist(refreshToken string) (bool, error) {
 
 func (r *authRepository) AccessToken(cfg *config.Config, claims *jwtAuth.Claims) string {
 	return jwtAuth.NewAccessToken(cfg.Jwt.AccessTokenSecret, cfg.Jwt.AccessTokenDuration, &jwtAuth.Claims{
-		UserId:   claims.UserId,
-		RoleCode: claims.RoleCode,
+		UserId: claims.UserId,
+		Role:   claims.Role,
 	}).SignToken()
 }
 
 func (r *authRepository) RefreshToken(cfg *config.Config, claims *jwtAuth.Claims) string {
 	return jwtAuth.NewRefreshToken(cfg.Jwt.RefreshTokenSecret, cfg.Jwt.RefreshTokenDuration, &jwtAuth.Claims{
-		UserId:   claims.UserId,
-		RoleCode: claims.RoleCode,
+		UserId: claims.UserId,
+		Role:   claims.Role,
 	}).SignToken()
+}
+
+func (r *authRepository) GetRole(roleName string) (*model.Role, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	collection := r.roleCollection()
+
+	var role model.Role
+	err := collection.FindOne(ctx, bson.M{"Role": roleName}).Decode(&role)
+	if err != nil {
+		return nil, err
+	}
+
+	return &role, err
 }

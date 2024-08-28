@@ -2,6 +2,7 @@ package jwtAuth
 
 import (
 	"errors"
+	"go-meechok/modules/auth/model"
 	"os"
 	"time"
 
@@ -14,8 +15,8 @@ type (
 	}
 
 	Claims struct {
-		UserId   string `json:"user_id"`
-		RoleCode string `json:"role_code"`
+		UserId string     `json:"user_id"`
+		Role   model.Role `json:"role"`
 	}
 
 	AuthMapClaims struct {

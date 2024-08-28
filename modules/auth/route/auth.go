@@ -1,19 +1,23 @@
 package route
 
 import (
-	"go-auth/middleware"
-	"go-auth/modules/auth/handler"
-	"go-auth/modules/auth/repository"
-	"go-auth/modules/auth/useCase"
-	"go-auth/server/types"
+	"go-meechok/middleware"
+	"go-meechok/modules/auth/handler"
+	"go-meechok/modules/auth/repository"
+	"go-meechok/modules/auth/useCase"
+	"go-meechok/pkg/redisCon"
+	"go-meechok/server/types"
 )
 
 func AuthRoute(s *types.Server) {
 
-	authRepo := repository.NewAuthRepository(s.Db)
+	rd := redisCon.NewRedis(s.Cfg)
+
+	authRepo := repository.NewAuthRepository(s.Db, rd)
 	authUsecase := useCase.NewAuthUsecase(authRepo)
 	authHandler := handler.NewAuthHandler(authUsecase, s.Cfg)
 
+	handler.NewAuthGrpcHandler(authUsecase)
 	// oauthHandler := oauth.NewOAuthHandler(s.Cfg, authUsecase)
 
 	s.App.POST("/auth/register/email", authHandler.RegisterByEmail)

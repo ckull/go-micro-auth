@@ -48,13 +48,18 @@ type (
 		Role string `json:"role"`
 	}
 
+	Role struct {
+		Role        string   `bson:"role" json:"role"`
+		Permissions []string `bson:"permissions" json:"permissions"`
+	}
+
 	User struct {
 		ID            primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 		Email         string             `bson:"email" json:"email"`
 		Password      string             `bson:"password" json:"password,omitempty"`
 		OauthProvider string             `bson:"oauth_provider" json:"oauth_provider"`
 		OauthId       string             `bson:"oauth_id" json:"oauth_id,omitempty"`
-		Role          string             `bson:"role" json:"role"`
+		Role          Role               `bson:"role" json:"role"`
 		CreatedAt     time.Time          `bson:"created_at" json:"created_at"`
 		UpdatedAt     time.Time          `bson:"updated_at" json:"updated_at"`
 	}

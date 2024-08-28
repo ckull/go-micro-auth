@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"go-auth/config"
-	"go-auth/modules/auth/model"
-	"go-auth/modules/auth/useCase"
-	"go-auth/pkg/cookieHelper"
-	"go-auth/pkg/jwtAuth"
-	"go-auth/utils"
+	"go-meechok/config"
+	"go-meechok/modules/auth/model"
+	"go-meechok/modules/auth/useCase"
+	"go-meechok/pkg/cookieHelper"
+	"go-meechok/pkg/jwtAuth"
+	"go-meechok/utils"
 	"log"
 	"net/http"
 	"time"
@@ -48,8 +48,8 @@ func NewAuthHandler(authUsecase useCase.AuthUsecase, cfg *config.Config) AuthHan
 }
 
 func (h *authHandler) RegisterByEmail(c echo.Context) error {
-	var registerReq model.RegisterReq
-	if err := c.Bind(&registerReq); err != nil {
+	var registerReq *model.RegisterReq
+	if err := c.Bind(registerReq); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
 	}
 
@@ -60,7 +60,7 @@ func (h *authHandler) RegisterByEmail(c echo.Context) error {
 	}
 
 	fmt.Println("registerReq: ", registerReq)
-	accessToken, err := h.authUsecase.RegisterByEmail(c, h.cfg, &registerReq)
+	accessToken, err := h.authUsecase.RegisterByEmail(c, h.cfg, registerReq)
 	if err != nil {
 		switch {
 		case errors.Is(err, model.ErrEmailAlreadyExists):
@@ -73,8 +73,8 @@ func (h *authHandler) RegisterByEmail(c echo.Context) error {
 }
 
 func (h *authHandler) Login(c echo.Context) error {
-	var loginReq model.LoginReq
-	if err := c.Bind(&loginReq); err != nil {
+	var loginReq *model.LoginReq
+	if err := c.Bind(loginReq); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
 	}
 
@@ -84,7 +84,7 @@ func (h *authHandler) Login(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, validationErrors)
 	}
 
-	accessToken, err := h.authUsecase.Login(c, h.cfg, &loginReq)
+	accessToken, err := h.authUsecase.Login(c, h.cfg, loginReq)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
 	}
